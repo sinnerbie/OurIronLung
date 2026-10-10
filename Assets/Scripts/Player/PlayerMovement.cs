@@ -28,9 +28,24 @@ public class PlayerMovement : MonoBehaviour
     [Range(-1, 1)] public float tempMove = 0;
     [Range(-1, 1)] public float tempRotation = 0;
 
+    public float force;
+
+    private Rigidbody _rb;
+
+    void Awake()
+    {
+        _rb = GetComponent<Rigidbody>();
+    }
+
     void MovePlayer()
     {
-        transform.Translate(Vector3.up * movement * Time.deltaTime);
+        _rb.AddForce(Vector3.up * movement * force, ForceMode.Impulse);
+        //transform.Translate(Vector3.up * movement * Time.deltaTime);
+    }
+
+    private void FixedUpdate()
+    {
+        _rb.AddForce(Vector3.up * movement * force, ForceMode.Impulse);
     }
 
     void RotatePlayer()
