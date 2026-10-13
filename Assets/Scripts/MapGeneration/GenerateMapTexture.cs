@@ -12,6 +12,7 @@ public class GenerateMapTexture : MonoBehaviour
     public float scale;
     private Texture2D noiseTexture;
     private Color[] pixels;
+    private Renderer rend;
 
     [Header("References")]
     public Material debugMat;
@@ -19,15 +20,21 @@ public class GenerateMapTexture : MonoBehaviour
     public GameObject player;
     public GameObject goal;
 
+    void Awake()
+    {
+        rend = GetComponent<Renderer>();
+    }
+
     void Start()
     {
         noiseTexture = new Texture2D(width, height);
         pixels = new Color[noiseTexture.width * noiseTexture.height];
+        rend.material.mainTexture = noiseTexture;
         CalculateNoise();
     }
 
     [ContextMenu("Try")]
-    void CalculateNoise()
+    public void CalculateNoise()
     {
         if (GameObject.Find("Wall") != null)
             DeleteAllWalls();
