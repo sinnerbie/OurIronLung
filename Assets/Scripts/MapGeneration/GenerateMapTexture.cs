@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.PackageManager.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GenerateMapTexture : MonoBehaviour
 {
@@ -16,9 +18,9 @@ public class GenerateMapTexture : MonoBehaviour
 
     [Header("References")]
     public Material debugMat;
-    public GameObject cam;
     public GameObject player;
     public GameObject goal;
+    public Text description;
 
     void Awake()
     {
@@ -27,7 +29,7 @@ public class GenerateMapTexture : MonoBehaviour
 
     void Start()
     {
-        noiseTexture = new Texture2D(width, height);
+        noiseTexture = new Texture2D(width + 2, height + 2);
         pixels = new Color[noiseTexture.width * noiseTexture.height];
         rend.material.mainTexture = noiseTexture;
         CalculateNoise();
@@ -38,32 +40,39 @@ public class GenerateMapTexture : MonoBehaviour
     {
         if (GameObject.Find("Wall") != null)
             DeleteAllWalls();
-        noiseTexture = new Texture2D(width, height);
+        noiseTexture = new Texture2D(width + 2, height + 2);
         pixels = new Color[noiseTexture.width * noiseTexture.height];
-        List<Vector3> locations = new List<Vector3>();
+        rend.material.mainTexture = noiseTexture;
+        Dictionary<int, Vector3> locations = new Dictionary<int, Vector3>();
         for (float y = 0; y < height; y++)
         {
             for (float x = 0; x < width; x++)
             {
-                float xCoord = xOrigin + x / noiseTexture.width * scale;
-                float yCoord = yOrigin + y / noiseTexture.height * scale;
-                float sample = Mathf.PerlinNoise(xCoord, yCoord);
-                if (sample > 0.5f)
+                if ((x == 0 || y == 0) || (x == width - 1 || y == height - 1))
+                    pixels[(int)y * noiseTexture.width + (int)x] = new Color(0, 1, 0, 1);
+                else if ((x == 1 || y == 1) || (x == width - 2 || y == height - 2))
+                    pixels[(int)y * noiseTexture.width + (int)x] = new Color(0, 0, 0, 1);
+                else
                 {
-                    sample = 1;
-                    CreateCollision(x, y);
+                    float xCoord = xOrigin + x / noiseTexture.width * scale;
+                    float yCoord = yOrigin + y / noiseTexture.height * scale;
+                    float sample = Mathf.PerlinNoise(xCoord, yCoord);
+                    if (sample > 0.5f)
+                    {
+                        sample = 1;
+                        CreateCollision(x, y);
+                    }
+                    else if (sample <= 0.5f)
+                    {
+                        sample = 0;
+                        locations.Add((int)y * noiseTexture.width + (int)x, new Vector3(x, y, 0));
+                    }
+                    pixels[(int)y * noiseTexture.width + (int)x] = new Color(0, sample, 0, 1);
                 }
-                else if (sample <= 0.5f)
-                {
-                    sample = 0;
-                    locations.Add(new Vector3(x, y, 0));
-                }
-                pixels[(int)y * noiseTexture.width + (int)x] = new Color(sample, sample, sample);
             }
         }
         SetStartAndGoal(locations);
         GenerateBounds();
-        PositionCamera();
         noiseTexture.SetPixels(pixels);
         noiseTexture.Apply();
     }
@@ -74,6 +83,7 @@ public class GenerateMapTexture : MonoBehaviour
         GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         wall.transform.localScale = new Vector3(scale, scale, scale);
         wall.transform.position = pos;
+        wall.layer = 3;
         debugMat.color = Color.green;
         wall.GetComponent<Renderer>().material = debugMat;
         wall.name = "Wall";
@@ -81,16 +91,16 @@ public class GenerateMapTexture : MonoBehaviour
 
     void GenerateBounds()
     {
-        for (float y = -2; y < height + 2; y++)
+        for (float y = 0; y < height; y++)
         {
-            CreateCollision(-2, y);
-            CreateCollision(width + 1, y);
+            CreateCollision(0, y);
+            CreateCollision(width - 1, y);
         }
 
-        for (float x = -2; x < width + 2; x++)
+        for (float x = 0; x < width; x++)
         {
-            CreateCollision(x, -2);
-            CreateCollision(x, height + 2);
+            CreateCollision(x, 0);
+            CreateCollision(x, height - 1);
         }
     }
 
@@ -101,20 +111,18 @@ public class GenerateMapTexture : MonoBehaviour
             Destroy(ob);
     }
 
-    void PositionCamera()
+    void SetStartAndGoal(Dictionary<int, Vector3> locations)
     {
-        Vector3 pos = new Vector3((width * scale) / 2, (height * scale) / 2, -10);
-        cam.transform.position = pos;
-        cam.GetComponent<Camera>().orthographicSize = (scale / 2.5f) * 71;
-    }
-
-    void SetStartAndGoal(List<Vector3> locations)
-    {
+        string locationText = "";
         System.Random rng = new System.Random();
         var shuffledList = locations.OrderBy(x => rng.Next()).ToList();
-
-        Vector3 playPos = new Vector3(shuffledList[0].x * scale, shuffledList[0].y * scale, 0);
-        Vector3 goalPos = new Vector3(shuffledList[1].x * scale, shuffledList[1].y * scale, 0);
+        Vector3 playPos = new Vector3(shuffledList[0].Value.x * scale, shuffledList[0].Value.y * scale, 0);
+        locationText += "Start Coordinate = x." + shuffledList[0].Value.x + " y." + shuffledList[0].Value.y; 
+        pixels[shuffledList[0].Key] = new Color(1, 0, 0, 1);
+        Vector3 goalPos = new Vector3(shuffledList[1].Value.x * scale, shuffledList[1].Value.y * scale, 0);
+        locationText += "\nGoal  Coordinate = x." + shuffledList[1].Value.x + " y." + shuffledList[1].Value.y;
+        description.text = locationText;
+        pixels[shuffledList[1].Key] = new Color(1, 1, 0, 1);
         player.transform.position = playPos;
         player.transform.rotation = Quaternion.identity;
         goal.transform.position = goalPos;

@@ -6,19 +6,19 @@ public class GameRules : MonoBehaviour
     [SerializeField] GenerateMapTexture map;
 
     [SerializeField] InputField coordinateX, coordinateY;
-    [SerializeField] InputField mapArea;
     [SerializeField] InputField mapResolution;
+    [SerializeField] InputField mapScale;
 
     private int prevCoordX, prevCoordY;
-    private int prevMapArea;
-    private float prevMapRes;
+    private int prevMapRes;
+    private float prevMapScale;
 
     void Start()
     {
         coordinateX.text = map.xOrigin.ToString();
         coordinateY.text = map.yOrigin.ToString();
-        mapArea.text = (map.height * 2).ToString();
-        mapResolution.text = map.scale.ToString();
+        mapResolution.text = (map.height * 2).ToString();
+        mapScale.text = map.scale.ToString();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -48,17 +48,17 @@ public class GameRules : MonoBehaviour
             map.yOrigin = prevCoordY;
         }
 
-        if (mapArea.text != prevMapArea.ToString())
-        {
-            prevMapArea = int.Parse(mapArea.text);
-            map.height = prevMapArea / 2;
-            map.width = prevMapArea / 2;
-        }
-
         if (mapResolution.text != prevMapRes.ToString())
         {
-            prevMapRes = float.Parse(mapResolution.text);
-            map.scale = prevMapRes;
+            prevMapRes = int.Parse(mapResolution.text);
+            map.height = prevMapRes / 2;
+            map.width = prevMapRes / 2;
+        }
+
+        if (mapScale.text != prevMapScale.ToString())
+        {
+            prevMapScale = float.Parse(mapScale.text);
+            map.scale = prevMapScale;
         }
 
         map.CalculateNoise();

@@ -40,7 +40,6 @@ public class PlayerMovement : MonoBehaviour
     void MovePlayer()
     {
         _rb.AddForce(Vector3.up * movement * force, ForceMode.Impulse);
-        //transform.Translate(Vector3.up * movement * Time.deltaTime);
     }
 
     private void FixedUpdate()
