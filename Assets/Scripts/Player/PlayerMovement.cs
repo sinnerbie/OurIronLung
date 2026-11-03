@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -31,6 +32,8 @@ public class PlayerMovement : MonoBehaviour
 
     public static Action<Quaternion> OnStopMoving;
     bool justStopped = false;
+    bool checkCalibrate = false;
+    IEnumerator doCheckCalibrate;
 
     void Awake()
     {
@@ -90,6 +93,15 @@ public class PlayerMovement : MonoBehaviour
                 movementInput = -1;
                 justStopped = true;
             }
+
+            if (_arduino.backPress == 1 && _arduino.forwardPress == 1)
+            {
+                if (doCheckCalibrate == null)
+                {
+                    doCheckCalibrate = RecalibrateController();
+                    StartCoroutine(doCheckCalibrate);
+                }
+            }
         }
     }
 
@@ -101,5 +113,29 @@ public class PlayerMovement : MonoBehaviour
             return true;
 
         return false;
+    }
+
+    IEnumerator RecalibrateController()
+    {
+        float countdown = 2;
+        while (countdown > 0)
+        {
+            if (_arduino.backPress == 1 && _arduino.forwardPress == 1)
+            {
+                countdown -= 0.1f;
+                yield return new WaitForSeconds(0.1f);
+            }
+            else
+            {
+                IEnumerator currentRoutine = doCheckCalibrate;
+                doCheckCalibrate = null;
+                StopCoroutine(currentRoutine);
+            }    
+        }
+
+        _arduino.WriteToControler("0");
+        IEnumerator curRoutine = doCheckCalibrate;
+        doCheckCalibrate = null;
+        StopCoroutine(curRoutine);
     }
 }

@@ -96,9 +96,18 @@ public class ArduinoSerialReadWrite : MonoBehaviour
                 else
                     backPress = 0;
                 break;
+            case 'A':
+                Debug.Log("IT worked!!!");
+                break;
             default:
                 Debug.LogError(type + " is not a recognized variable type");
                 break;
         }
+    }
+
+    public void WriteToControler(string toWrite)
+    {
+        serial.Write(toWrite);
+        Debug.Log("Written to ard");
     }
 }
