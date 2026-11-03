@@ -1,18 +1,10 @@
+using System;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
     public bool usingTemps = true;
-    private float movement;
-    public float movementInput
-    {
-        get { return movement; }
-        set
-        { 
-            movement = value;
-            MovePlayer();
-        }
-    }
+    public float movementInput;
 
     private float rotation;
     public float rotationInput
@@ -29,22 +21,36 @@ public class PlayerMovement : MonoBehaviour
     [Range(-1, 1)] public float tempRotation = 0;
 
     public float force;
+    public float rotSpeed = 2;
+    public float currentRot;
 
     private Rigidbody _rb;
+
+    public bool isYUp = true;
+    ArduinoSerialReadWrite _arduino;
+
+    public static Action<Quaternion> OnStopMoving;
+    bool justStopped = false;
 
     void Awake()
     {
         _rb = GetComponent<Rigidbody>();
-    }
-
-    void MovePlayer()
-    {
-        _rb.AddForce(Vector3.up * movement * force, ForceMode.Impulse);
+        _arduino = FindAnyObjectByType<ArduinoSerialReadWrite>();
     }
 
     private void FixedUpdate()
     {
-        _rb.AddForce(Vector3.up * movement * force, ForceMode.Impulse);
+        if (movementInput != 0)
+            _rb.AddForce(transform.up * movementInput * force, ForceMode.Impulse);
+        else
+        {
+            _rb.linearVelocity = Vector3.zero;
+            if (justStopped)
+            {
+                OnStopMoving?.Invoke(transform.rotation);
+                justStopped = false;
+            }
+        }
     }
 
     void RotatePlayer()
@@ -59,5 +65,41 @@ public class PlayerMovement : MonoBehaviour
             movementInput = tempMove;
             rotationInput = tempRotation;
         }
+        else
+        {
+            float rotDir;
+            if (isYUp)
+                rotDir = _arduino.angularVelocity.x;
+            else
+                rotDir = _arduino.angularVelocity.y;
+
+            if (currentRot != rotDir)
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, 0, rotDir), rotSpeed * Time.deltaTime);
+            
+            if (WithinRotation(rotDir))
+                currentRot = rotDir;
+
+            movementInput = 0;
+            if (_arduino.forwardPress == 1)
+            {
+                movementInput = 1;
+                justStopped = true;
+            }
+            if (_arduino.backPress == 1)
+            {
+                movementInput = -1;
+                justStopped = true;
+            }
+        }
+    }
+
+    bool WithinRotation(float comp)
+    {
+        float difference = transform.eulerAngles.z - comp;
+        if (difference < 0) difference *= -1;
+        if (difference <= 2)
+            return true;
+
+        return false;
     }
 }
