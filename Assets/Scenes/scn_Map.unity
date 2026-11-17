@@ -1430,7 +1430,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee9f57b597e532b469d8878c87dd2262, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArduinoSerialReadWrite
-  port: COM4
+  port: COM7
   canRead: 0
   forwardPress: 0
   backPress: 0

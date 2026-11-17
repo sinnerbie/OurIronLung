@@ -96,8 +96,9 @@ public class PlayerMovement : MonoBehaviour
 
             if (_arduino.backPress == 1 && _arduino.forwardPress == 1)
             {
-                if (doCheckCalibrate == null)
+                if (!alreadyCalibrating)
                 {
+                    Debug.Log("Begin wait for cali");
                     doCheckCalibrate = RecalibrateController();
                     StartCoroutine(doCheckCalibrate);
                 }
@@ -115,8 +116,11 @@ public class PlayerMovement : MonoBehaviour
         return false;
     }
 
+    bool alreadyCalibrating = false;
     IEnumerator RecalibrateController()
     {
+        Debug.Log("Waiting to recalibrate");
+        alreadyCalibrating = true;
         float countdown = 2;
         while (countdown > 0)
         {
@@ -126,16 +130,11 @@ public class PlayerMovement : MonoBehaviour
                 yield return new WaitForSeconds(0.1f);
             }
             else
-            {
-                IEnumerator currentRoutine = doCheckCalibrate;
-                doCheckCalibrate = null;
-                StopCoroutine(currentRoutine);
-            }    
+                StopCoroutine(doCheckCalibrate);  
         }
-
-        _arduino.WriteToControler("0");
-        IEnumerator curRoutine = doCheckCalibrate;
-        doCheckCalibrate = null;
-        StopCoroutine(curRoutine);
+        Debug.Log("Recalibrating");
+        _arduino.WriteToControler("U");
+        alreadyCalibrating = false;
+        StopCoroutine(doCheckCalibrate);
     }
 }
