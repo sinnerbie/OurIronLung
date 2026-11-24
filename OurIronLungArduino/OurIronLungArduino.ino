@@ -1,3 +1,5 @@
+#include <Adafruit_LiquidCrystal.h>
+
 #include <MPU6500_WE.h>
 
 #include <Wire.h>
@@ -6,21 +8,22 @@
 
 MPU6500_WE myMPU6500 = MPU6500_WE(MPU6500_ADDR);
 
+Adafruit_LiquidCrystal lcd(0);
+String compas = "-------N------NE-------E------SE-------S------SW-------W-------NW"; // length 65
+
 int buttonF = 8;
 int buttonB = 9;
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Starting");
+  /*Serial.println(compas.length());
   Wire.begin();
-  Serial.println("Wire has begun");
   if(!myMPU6500.init()){
     Serial.println("MPU6500 does not respond");
   }
   else{
     Serial.println("MPU6500 is connected");
   }
-  Serial.println("ARGH");
   pinMode(buttonF, INPUT_PULLUP);
   pinMode(buttonB, INPUT_PULLUP);
   pinMode(7, OUTPUT);
@@ -42,27 +45,43 @@ void setup() {
 
   myMPU6500.enableAccDLPF(true);
 
-  myMPU6500.setAccDLPF(MPU6500_DLPF_6);
-  Serial.println("Hello");
+  myMPU6500.setAccDLPF(MPU6500_DLPF_6);*/
+
+  lcd.begin(16, 2);
+  for (int i = 0; i < 16; i++)
+    lcd.print(compas[i]);
+  lcd.setCursor(0, 1);
+  lcd.print("x.000  y.000");
   delay(200);
 }
 
 void loop() {
+  /*if (Serial.available()>0){
+    String input = Serial.readStringUntil('\n');
+    
+    if (input[0] == "C") {
+      String toWrite = input;
+      toWrite[0] = "";
+      UpdateCompas(toWrite.toInt());
+      delay(25);
+    }
+
+    if (input[0] == "D") {
+      String toWrite = input;
+      toWrite[0] = "";
+      UpdatePosition(toWrite);
+      delay(25);
+    }
+  }
+  UpdateInputs();*/
+}
+
+void UpdateInputs()
+{
   xyzFloat gValue = myMPU6500.getGValues();
   xyzFloat gyr = myMPU6500.getGyrValues();
   float temp = myMPU6500.getTemperature();
   float resultantG = myMPU6500.getResultantG(gValue);
-  Serial.print("Serial = ");
-  Serial.println(Serial.available());
-  if (Serial.available()>0){
-    String input = Serial.readStringUntil('\n');
-    
-    if (input == "U") {
-      Serial.print("A");
-      digitalWrite(7, HIGH);
-      delay(25);
-    }
-  }
 
   Serial.print("X");
   Serial.println(gValue.x);
@@ -78,5 +97,18 @@ void loop() {
   delay(25);
   Serial.print("B");
   Serial.println(digitalRead(buttonB));
-  delay(1000);
+  delay(500);
+}
+
+void UpdateCompas(int heading) {
+  int mappedHeading = map(0, 360, 0, 65, heading);
+  lcd.setCursor(0,0);
+  lcd.print("");
+  for (int i = mappedHeading; i < 16; i++)
+    lcd.print(compas[i]);
+}
+
+void UpdatePosition(String toWrite) {
+  lcd.setCursor(0, 1);
+  lcd.print(toWrite);
 }
