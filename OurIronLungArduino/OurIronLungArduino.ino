@@ -23,6 +23,7 @@ void setup() {
   Serial.println("ARGH");
   pinMode(buttonF, INPUT_PULLUP);
   pinMode(buttonB, INPUT_PULLUP);
+  pinMode(7, OUTPUT);
 
   Serial.println("Position you MPU6500 flat and don't move it - calibrating...");
   delay(1000);
@@ -51,12 +52,14 @@ void loop() {
   xyzFloat gyr = myMPU6500.getGyrValues();
   float temp = myMPU6500.getTemperature();
   float resultantG = myMPU6500.getResultantG(gValue);
-  
-  if (Serial.available()){
+  Serial.print("Serial = ");
+  Serial.println(Serial.available());
+  if (Serial.available()>0){
     String input = Serial.readStringUntil('\n');
+    
     if (input == "U") {
-      pinMode(10, OUTPUT);
-      digitalWrite(10, HIGH);
+      Serial.print("A");
+      digitalWrite(7, HIGH);
       delay(25);
     }
   }

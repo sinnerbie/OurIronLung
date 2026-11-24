@@ -14,6 +14,7 @@ public class ArduinoSerialReadWrite : MonoBehaviour
     private string data;
     private string toRead;
     public bool canRead = false;
+    private string toWrite = "";
 
     public int forwardPress = 0;
     public int backPress = 0;
@@ -56,6 +57,12 @@ public class ArduinoSerialReadWrite : MonoBehaviour
                     if (data.Length > 0)
                         toRead = data;
                     SortLine(toRead);
+                    if (toWrite != "")
+                    {
+                        serial.Write(toWrite);
+                        toWrite = "";
+                        Debug.Log("Sent to arduino");
+                    }    
                 }
                 catch (System.Exception)
                 {
@@ -96,18 +103,20 @@ public class ArduinoSerialReadWrite : MonoBehaviour
                 else
                     backPress = 0;
                 break;
-            case 'A':
-                Debug.Log("IT worked!!!");
-                break;
             default:
                 Debug.LogError(type + " is not a recognized variable type");
                 break;
         }
     }
 
-    public void WriteToControler(string toWrite)
+    public void WriteToControler(string input)
     {
-        serial.Write(toWrite);
-        Debug.Log("Written to ard");
+        toWrite = input;
+    }
+
+    [ContextMenu("Try write")]
+    public void TryWrite()
+    {
+        toWrite = "U";
     }
 }
